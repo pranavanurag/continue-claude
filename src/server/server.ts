@@ -56,7 +56,7 @@ async function startServer() {
       // Serve models.json
       if (url.pathname === '/api/models') {
         try {
-          const modelsJson = await file('models.json').text();
+          const modelsJson = await file('config/models.json').text();
           return new Response(modelsJson, {
             headers: { 'Content-Type': 'application/json' }
           });
