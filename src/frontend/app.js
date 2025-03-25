@@ -21,7 +21,7 @@ class ChatApp {
    */
   async init() {
     // Initialize UI components
-    uiController.initCollapsibles();
+    uiController.initUI();
     
     // Load saved API key
     const savedApiKey = chatStorage.loadApiKey();
@@ -37,6 +37,9 @@ class ChatApp {
     
     // Attach event listeners
     this.attachEventListeners();
+    
+    // Add keyboard shortcuts
+    this.setupKeyboardShortcuts();
   }
   
   /**
@@ -52,6 +55,48 @@ class ChatApp {
     document.getElementById('deleteSavedChat').addEventListener('click', this.handleDeleteSavedChat.bind(this));
     document.getElementById('saveCurrentChat').addEventListener('click', this.handleSaveCurrentChat.bind(this));
     document.getElementById('sendMessage').addEventListener('click', this.handleSendMessage.bind(this));
+    
+    // Debug menu toggle
+    const debugButton = document.createElement('button');
+    debugButton.id = 'debugButton';
+    debugButton.className = 'btn btn-small btn-outline';
+    debugButton.innerHTML = '<i class="fas fa-bug"></i> Debug';
+    debugButton.style.marginLeft = '10px';
+    debugButton.addEventListener('click', () => {
+      const debugContainer = document.querySelector('.debug-container');
+      debugContainer.style.display = debugContainer.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Add debug button to header
+    document.querySelector('.app-header > div').appendChild(debugButton);
+  }
+  
+  /**
+   * Setup keyboard shortcuts
+   */
+  setupKeyboardShortcuts() {
+    // Send message with Ctrl+Enter
+    document.getElementById('newMessage').addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        this.handleSendMessage();
+      }
+    });
+    
+    // Global shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Toggle sidebar with Ctrl+B
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        document.querySelector('.app-sidebar').classList.toggle('active');
+      }
+      
+      // Toggle JSON panel with Ctrl+J
+      if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
+        e.preventDefault();
+        document.querySelector('#jsonPanel .panel-header').click();
+      }
+    });
   }
   
   /**
@@ -103,6 +148,13 @@ class ChatApp {
       
       // Suggest saving the chat
       document.getElementById('newChatName').value = uiController.generateChatName();
+      
+      // Close the JSON panel
+      document.querySelector('#jsonPanel.panel').classList.remove('active');
+      document.querySelector('#jsonPanel .panel-content').classList.remove('open');
+      
+      // Focus the new message input
+      document.getElementById('newMessage').focus();
     } catch (error) {
       alert('Error parsing chat JSON: ' + error.message);
     }
@@ -128,6 +180,14 @@ class ChatApp {
       
       // Update the JSON display
       uiController.displayFormattedJson(this.currentChat);
+      
+      // Close sidebar on mobile
+      if (window.innerWidth <= 992) {
+        document.querySelector('.app-sidebar').classList.remove('active');
+      }
+      
+      // Focus the new message input
+      document.getElementById('newMessage').focus();
     }
   }
   
@@ -144,6 +204,15 @@ class ChatApp {
     if (confirm(`Are you sure you want to delete the chat "${chatId}"?`)) {
       chatStorage.deleteChat(chatId);
       this.updateSavedChatsDropdown();
+      
+      // If the deleted chat was the current one, clear the UI
+      if (chatId === this.currentChatId) {
+        this.currentChat = null;
+        this.currentChatId = null;
+        document.getElementById('conversation').innerHTML = '';
+        document.getElementById('jsonDisplay').style.display = 'none';
+      }
+      
       alert('Chat deleted');
     }
   }
@@ -170,7 +239,52 @@ class ChatApp {
     // Update dropdown
     this.updateSavedChatsDropdown();
     
-    alert(`Chat saved as "${chatName}"`);
+    // Close sidebar on mobile
+    if (window.innerWidth <= 992) {
+      document.querySelector('.app-sidebar').classList.remove('active');
+    }
+    
+    // Show a notification
+    this.showNotification(`Chat saved as "${chatName}"`);
+  }
+  
+  /**
+   * Show a temporary notification
+   * @param {string} message - Message to display
+   */
+  showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '10px 20px';
+    notification.style.background = 'rgba(0, 0, 0, 0.7)';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '1000';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateY(20px)';
+    notification.style.transition = 'all 0.3s ease';
+    
+    document.body.appendChild(notification);
+    
+    // Show notification
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Hide and remove after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
   }
   
   /**
@@ -205,6 +319,47 @@ class ChatApp {
       // Clear the input
       uiController.clearMessageInput();
       
+      // Show a loading indicator in the conversation
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'message assistant loading';
+      loadingDiv.innerHTML = `
+        <div class="loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+      `;
+      document.getElementById('conversation').appendChild(loadingDiv);
+      
+      // Add loading indicator style if it doesn't exist
+      if (!document.querySelector('style.loading-style')) {
+        const loadingStyle = document.createElement('style');
+        loadingStyle.className = 'loading-style';
+        loadingStyle.textContent = `
+          .loading-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+          }
+          .loading-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--gray-500);
+            display: inline-block;
+            animation: dot-pulse 1.4s infinite ease-in-out;
+            animation-fill-mode: both;
+          }
+          .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+          .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+          
+          @keyframes dot-pulse {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+          }
+        `;
+        document.head.appendChild(loadingStyle);
+      }
+      
       // Get the selected model
       const selectedModel = uiController.getSelectedModel();
       
@@ -216,6 +371,9 @@ class ChatApp {
         selectedModel, 
         uiController.logToDebugConsole.bind(uiController)
       );
+      
+      // Remove loading indicator
+      document.getElementById('conversation').removeChild(loadingDiv);
       
       // Add Claude's response to the conversation
       const assistantMessage = responseData.content[0].text;
@@ -245,7 +403,27 @@ class ChatApp {
       uiController.displayFormattedJson(this.currentChat);
       
     } catch (error) {
-      alert('Error sending message: ' + error.message);
+      // Remove loading indicator if there was an error
+      const loadingDiv = document.querySelector('.message.loading');
+      if (loadingDiv) {
+        document.getElementById('conversation').removeChild(loadingDiv);
+      }
+      
+      // Show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'message error';
+      errorDiv.style.backgroundColor = '#ffebee';
+      errorDiv.style.color = '#c62828';
+      errorDiv.style.alignSelf = 'center';
+      errorDiv.style.maxWidth = '100%';
+      errorDiv.style.textAlign = 'center';
+      errorDiv.textContent = `Error: ${error.message}`;
+      document.getElementById('conversation').appendChild(errorDiv);
+      
+      // Show debug console
+      document.querySelector('.debug-container').style.display = 'block';
+      
+      console.error('Error sending message:', error);
     }
   }
 }

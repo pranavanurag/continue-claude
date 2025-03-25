@@ -34,7 +34,11 @@ continue-claude/
 │   └── test.sh           # Test script
 ├── src/                  # Source code
 │   ├── frontend/         # Frontend files
-│   │   └── index.html    # Web UI
+│   │   ├── api.js        # API client
+│   │   ├── app.js        # Application logic
+│   │   ├── index.html    # Web UI
+│   │   ├── storage.js    # Storage utilities
+│   │   └── ui.js         # UI components/handlers
 │   └── server/           # Server code
 │       ├── chat.json     # Example chat data
 │       ├── claude.ts     # Claude API integration

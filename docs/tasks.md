@@ -1,5 +1,7 @@
 - hacky: add system prompt
 
+- edit all messages in the history
+
 - commit to disk. later, commit to gitloom, allowing managing local gitloom instances
 
 - display cost and token count on screen
@@ -10,6 +12,4 @@
    - project artifacts
    - images / blobs
    - MCP servers
-
-- make all inputs collapsable
 

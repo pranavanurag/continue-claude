@@ -7,6 +7,7 @@ class UIController {
     // Cache DOM elements
     this.elements = {
       apiKey: document.getElementById('apiKey'),
+      toggleApiKey: document.getElementById('toggleApiKey'),
       modelSelect: document.getElementById('modelSelect'),
       customModel: document.getElementById('customModel'),
       savedChatsSelect: document.getElementById('savedChatsSelect'),
@@ -16,19 +17,44 @@ class UIController {
       jsonCode: document.querySelector('#jsonDisplay code'),
       conversationContainer: document.getElementById('conversation'),
       newMessage: document.getElementById('newMessage'),
-      debugConsole: document.getElementById('debugConsole')
+      debugConsole: document.getElementById('debugConsole'),
+      jsonPanel: document.getElementById('jsonPanel'),
+      sidebarToggle: document.getElementById('sidebar-toggle'),
+      sidebar: document.querySelector('.app-sidebar'),
+      saveCurrentChat: document.getElementById('saveCurrentChat'),
+      loadSavedChat: document.getElementById('loadSavedChat'),
+      deleteSavedChat: document.getElementById('deleteSavedChat'),
+      sendMessage: document.getElementById('sendMessage'),
+      clearConversation: document.getElementById('clearConversation'),
+      exportJson: document.getElementById('exportJson'),
+      debugContainer: document.querySelector('.debug-container'),
+      toggleDebug: document.getElementById('toggleDebug')
     };
   }
   
   /**
-   * Initialize collapsible sections
+   * Initialize UI components and event listeners
    */
-  initCollapsibles() {
-    const collapsibles = document.getElementsByClassName('collapsible');
-    for (let i = 0; i < collapsibles.length; i++) {
-      collapsibles[i].addEventListener('click', function() {
-        this.classList.toggle('active');
-        const content = this.nextElementSibling;
+  initUI() {
+    this.initPanels();
+    this.initSidebar();
+    this.initPasswordToggle();
+    this.initDebugConsole();
+    this.initExtraButtons();
+    
+    // Open the JSON panel by default
+    document.querySelector('.panel-header').click();
+  }
+  
+  /**
+   * Initialize collapsible panels
+   */
+  initPanels() {
+    const panels = document.querySelectorAll('.panel');
+    for (const panel of panels) {
+      panel.querySelector('.panel-header').addEventListener('click', () => {
+        panel.classList.toggle('active');
+        const content = panel.querySelector('.panel-content');
         if (content.classList.contains('open')) {
           content.classList.remove('open');
         } else {
@@ -36,9 +62,89 @@ class UIController {
         }
       });
     }
+  }
+  
+  /**
+   * Initialize sidebar toggle
+   */
+  initSidebar() {
+    this.elements.sidebarToggle.addEventListener('click', () => {
+      this.elements.sidebar.classList.toggle('active');
+    });
     
-    // Open the JSON section by default
-    document.querySelector('.collapsible').click();
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 992 &&
+          this.elements.sidebar.classList.contains('active') &&
+          !this.elements.sidebar.contains(e.target) &&
+          e.target !== this.elements.sidebarToggle) {
+        this.elements.sidebar.classList.remove('active');
+      }
+    });
+  }
+  
+  /**
+   * Initialize password toggle
+   */
+  initPasswordToggle() {
+    this.elements.toggleApiKey.addEventListener('click', () => {
+      const apiKey = this.elements.apiKey;
+      const icon = this.elements.toggleApiKey.querySelector('i');
+      
+      if (apiKey.type === 'password') {
+        apiKey.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        apiKey.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+  }
+  
+  /**
+   * Initialize debug console
+   */
+  initDebugConsole() {
+    if (this.elements.toggleDebug) {
+      this.elements.toggleDebug.addEventListener('click', () => {
+        this.elements.debugContainer.style.display = this.elements.debugContainer.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+  }
+  
+  /**
+   * Initialize extra buttons added in the UI redesign
+   */
+  initExtraButtons() {
+    if (this.elements.clearConversation) {
+      this.elements.clearConversation.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the current conversation?')) {
+          this.elements.conversationContainer.innerHTML = '';
+        }
+      });
+    }
+    
+    if (this.elements.exportJson) {
+      this.elements.exportJson.addEventListener('click', () => {
+        const jsonData = this.elements.jsonCode.textContent;
+        if (!jsonData) {
+          alert('No JSON data to export');
+          return;
+        }
+        
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'claude-chat-export.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
   }
   
   /**
@@ -121,6 +227,9 @@ class UIController {
         this.addMessageToUI(message.sender, text);
       }
     }
+    
+    // Scroll to bottom of conversation
+    this.scrollToBottom();
   }
   
   /**
@@ -137,13 +246,22 @@ class UIController {
     if (sender === 'assistant') {
       messageDiv.innerHTML = this.renderMarkdown(text);
     } else {
+      // For user messages, handle newlines but not markdown
       messageDiv.textContent = text;
     }
     
     conversationDiv.appendChild(messageDiv);
     
-    // Scroll to bottom
-    window.scrollTo(0, document.body.scrollHeight);
+    // Scroll to bottom of conversation
+    this.scrollToBottom();
+  }
+  
+  /**
+   * Scroll to the bottom of the conversation
+   */
+  scrollToBottom() {
+    const container = this.elements.conversationContainer;
+    container.scrollTop = container.scrollHeight;
   }
   
   /**
@@ -153,12 +271,31 @@ class UIController {
    */
   renderMarkdown(text) {
     return text
-      .replace(/`{3}([\s\S]*?)`{3}/g, '<pre><code>$1</code></pre>') // code blocks
-      .replace(/`([^`]+)`/g, '<code>$1</code>') // inline code
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // bold
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>') // italic
-      .replace(/\n\n/g, '<br><br>') // paragraphs
-      .replace(/\n/g, '<br>'); // line breaks
+      // Code blocks with language
+      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+      // Code blocks without language
+      .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Bold
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      // Headers (h1, h2, h3)
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      // Unordered lists
+      .replace(/^\* (.*$)/gm, '<li>$1</li>')
+      .replace(/<\/li>\n<li>/g, '</li><li>')
+      .replace(/<li>(.*)<\/li>/g, '<ul><li>$1</li></ul>')
+      // Ordered lists
+      .replace(/^\d+\. (.*$)/gm, '<li>$1</li>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Paragraphs and line breaks
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
   }
   
   /**
@@ -166,6 +303,9 @@ class UIController {
    * @param {Object} requestInfo - Information to log
    */
   logToDebugConsole(requestInfo) {
+    // Show the debug console if it's hidden
+    this.elements.debugContainer.style.display = 'block';
+    
     const debugConsole = this.elements.debugConsole;
     const timestamp = new Date().toISOString();
     
@@ -196,6 +336,7 @@ class UIController {
    */
   clearMessageInput() {
     this.elements.newMessage.value = '';
+    this.elements.newMessage.focus();
   }
   
   /**
