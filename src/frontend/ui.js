@@ -4,6 +4,21 @@
 
 class UIController {
   constructor() {
+    // Theme state - will be properly initialized later
+    this.darkThemeEnabled = false;
+    this.sidebarCollapsed = false;
+    
+    // We'll initialize elements after DOM content loaded
+    this.elements = {};
+  }
+  
+  /**
+   * Initialize DOM elements
+   * This should be called after DOMContentLoaded
+   */
+  initElements() {
+    console.log('Initializing DOM elements...');
+    
     // Cache DOM elements
     this.elements = {
       apiKey: document.getElementById('apiKey'),
@@ -20,6 +35,8 @@ class UIController {
       debugConsole: document.getElementById('debugConsole'),
       jsonPanel: document.getElementById('jsonPanel'),
       sidebarToggle: document.getElementById('sidebar-toggle'),
+      floatingSidebarToggle: document.getElementById('floating-sidebar-toggle'),
+      themeToggle: document.getElementById('theme-toggle'),
       sidebar: document.querySelector('.app-sidebar'),
       saveCurrentChat: document.getElementById('saveCurrentChat'),
       loadSavedChat: document.getElementById('loadSavedChat'),
@@ -28,22 +45,126 @@ class UIController {
       clearConversation: document.getElementById('clearConversation'),
       exportJson: document.getElementById('exportJson'),
       debugContainer: document.querySelector('.debug-container'),
-      toggleDebug: document.getElementById('toggleDebug')
+      toggleDebug: document.getElementById('toggleDebug'),
+      appContainer: document.querySelector('.app-container')
     };
+    
+    console.log('DOM elements initialized:', {
+      themeToggle: !!this.elements.themeToggle,
+      sidebarToggle: !!this.elements.sidebarToggle,
+      floatingSidebarToggle: !!this.elements.floatingSidebarToggle,
+      appContainer: !!this.elements.appContainer
+    });
+    
+    // Theme state
+    this.darkThemeEnabled = localStorage.getItem('darkTheme') === 'true';
   }
   
   /**
    * Initialize UI components and event listeners
    */
   initUI() {
+    console.log('Initializing UI...');
+    
+    // First initialize DOM elements
+    this.initElements();
+    
     this.initPanels();
     this.initSidebar();
     this.initPasswordToggle();
     this.initDebugConsole();
     this.initExtraButtons();
+    this.initThemeToggle();
+    
+    // Apply saved theme on startup
+    if (this.darkThemeEnabled) {
+      console.log('Dark theme enabled from localStorage');
+      this.enableDarkTheme();
+    } else {
+      console.log('Dark theme not enabled from localStorage');
+    }
     
     // Open the JSON panel by default
-    document.querySelector('.panel-header').click();
+    const panelHeader = document.querySelector('.panel-header');
+    if (panelHeader) {
+      panelHeader.click();
+    } else {
+      console.warn('Panel header not found, cannot open by default');
+    }
+    
+    // Add a direct test method to window for debugging
+    window.testUI = () => {
+      console.log('Testing UI functionality...');
+      this.darkThemeEnabled = !this.darkThemeEnabled;
+      if (this.darkThemeEnabled) {
+        this.enableDarkTheme();
+      } else {
+        this.disableDarkTheme();
+      }
+      localStorage.setItem('darkTheme', this.darkThemeEnabled.toString());
+      return 'Theme toggled to ' + (this.darkThemeEnabled ? 'dark' : 'light');
+    };
+    
+    console.log('UI initialization complete');
+  }
+  
+  /**
+   * Initialize theme toggle
+   */
+  initThemeToggle() {
+    console.log('Setting up theme toggle...', this.elements.themeToggle);
+    
+    if (!this.elements.themeToggle) {
+      console.error('Theme toggle button not found in DOM!');
+      return;
+    }
+    
+    this.elements.themeToggle.addEventListener('click', () => {
+      console.log('Theme toggle clicked');
+      this.darkThemeEnabled = !this.darkThemeEnabled;
+      
+      if (this.darkThemeEnabled) {
+        this.enableDarkTheme();
+      } else {
+        this.disableDarkTheme();
+      }
+      
+      // Save preference to localStorage
+      localStorage.setItem('darkTheme', this.darkThemeEnabled.toString());
+      console.log('Theme preference saved to localStorage:', this.darkThemeEnabled);
+    });
+  }
+  
+  /**
+   * Enable dark theme
+   */
+  enableDarkTheme() {
+    document.body.classList.add('dark-theme');
+    
+    if (this.elements.themeToggle) {
+      const icon = this.elements.themeToggle.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
+      this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+    }
+  }
+  
+  /**
+   * Disable dark theme
+   */
+  disableDarkTheme() {
+    document.body.classList.remove('dark-theme');
+    
+    if (this.elements.themeToggle) {
+      const icon = this.elements.themeToggle.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+      this.elements.themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+    }
   }
   
   /**
@@ -68,17 +189,76 @@ class UIController {
    * Initialize sidebar toggle
    */
   initSidebar() {
-    this.elements.sidebarToggle.addEventListener('click', () => {
-      this.elements.sidebar.classList.toggle('active');
-    });
+    console.log('Setting up sidebar toggle...');
+    
+    // Check if elements exist
+    if (!this.elements.sidebarToggle) {
+      console.error('Sidebar toggle button not found in DOM!');
+    }
+    
+    if (!this.elements.appContainer) {
+      console.error('App container not found in DOM!');
+    }
+    
+    // Track sidebar state
+    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    console.log('Initial sidebar state:', this.sidebarCollapsed);
+    
+    // Apply initial state
+    if (this.sidebarCollapsed) {
+      console.log('Applying collapsed sidebar state');
+      this.elements.appContainer.classList.add('sidebar-collapsed');
+    }
+    
+    // Toggle function to reuse for both buttons
+    const toggleSidebar = () => {
+      console.log('Sidebar toggle clicked');
+      
+      // Toggle sidebar state
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+      console.log('New sidebar state:', this.sidebarCollapsed);
+      
+      // Save state to localStorage
+      localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+      
+      // Update UI
+      if (this.sidebarCollapsed) {
+        this.elements.appContainer.classList.add('sidebar-collapsed');
+        this.elements.sidebarToggle.innerHTML = '<i class="fas fa-bars"></i> Show Sidebar';
+      } else {
+        this.elements.appContainer.classList.remove('sidebar-collapsed');
+        this.elements.sidebarToggle.innerHTML = '<i class="fas fa-cog"></i> Settings';
+      }
+    };
+    
+    // Set initial button text based on state
+    if (this.sidebarCollapsed) {
+      this.elements.sidebarToggle.innerHTML = '<i class="fas fa-bars"></i> Show Sidebar';
+    }
+    
+    // Main sidebar toggle button
+    this.elements.sidebarToggle.addEventListener('click', toggleSidebar);
+    
+    // Floating sidebar toggle button (for mobile)
+    if (this.elements.floatingSidebarToggle) {
+      console.log('Setting up floating sidebar toggle');
+      this.elements.floatingSidebarToggle.addEventListener('click', toggleSidebar);
+    } else {
+      console.warn('Floating sidebar toggle button not found in DOM');
+    }
     
     // Close sidebar when clicking outside on mobile
     document.addEventListener('click', (e) => {
       if (window.innerWidth <= 992 &&
-          this.elements.sidebar.classList.contains('active') &&
+          !this.sidebarCollapsed &&
           !this.elements.sidebar.contains(e.target) &&
-          e.target !== this.elements.sidebarToggle) {
-        this.elements.sidebar.classList.remove('active');
+          e.target !== this.elements.sidebarToggle &&
+          e.target !== this.elements.floatingSidebarToggle) {
+        console.log('Closing sidebar on outside click (mobile)');
+        this.sidebarCollapsed = true;
+        localStorage.setItem('sidebarCollapsed', 'true');
+        this.elements.appContainer.classList.add('sidebar-collapsed');
+        this.elements.sidebarToggle.innerHTML = '<i class="fas fa-bars"></i> Show Sidebar';
       }
     });
   }

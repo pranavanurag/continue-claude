@@ -20,13 +20,20 @@ class ChatApp {
    * Initialize the application
    */
   async init() {
+    console.log('Initializing app...');
+    
     // Initialize UI components
     uiController.initUI();
     
     // Load saved API key
     const savedApiKey = chatStorage.loadApiKey();
     if (savedApiKey) {
-      document.getElementById('apiKey').value = savedApiKey;
+      const apiKeyElement = document.getElementById('apiKey');
+      if (apiKeyElement) {
+        apiKeyElement.value = savedApiKey;
+      } else {
+        console.error('apiKey element not found');
+      }
     }
     
     // Update saved chats dropdown
@@ -40,6 +47,8 @@ class ChatApp {
     
     // Add keyboard shortcuts
     this.setupKeyboardShortcuts();
+    
+    console.log('App initialization complete');
   }
   
   /**
