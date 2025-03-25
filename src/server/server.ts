@@ -7,7 +7,7 @@ let apiKey: string;
 
 async function loadApiKey() {
   try {
-    apiKey = (await readFile('key', 'utf8')).trim();
+    apiKey = (await readFile('./config/key.txt', 'utf8')).trim();
   } catch (error) {
     console.error("Error loading API key:", error);
     // Don't exit since API key can now be provided in the UI
@@ -29,7 +29,7 @@ async function startServer() {
       
       // Serve index.html for root path
       if (url.pathname === '/' || url.pathname === '/index.html') {
-        const indexHtml = await file('index.html').text();
+        const indexHtml = await file('src/frontend/index.html').text();
         return new Response(indexHtml, {
           headers: { 'Content-Type': 'text/html' }
         });

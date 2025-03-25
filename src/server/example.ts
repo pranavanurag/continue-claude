@@ -8,8 +8,8 @@ import { readFile } from 'fs/promises';
 
 async function main() {
     try {
-        const data = await readFile('chat.json', 'utf8');
-        const key = await readFile('key', 'utf8');
+        const data = await readFile('./src/server/chat.json', 'utf8');
+        const key = await readFile('./config/key.txt', 'utf8');
         const claudeChat = JSON.parse(data) as ClaudeChat;
         const messages = convertClaudeChat(claudeChat);
         // console.log("messages so far", messages);

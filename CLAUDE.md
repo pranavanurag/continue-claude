@@ -1,10 +1,10 @@
 # CLAUDE.md - Guide for Agentic Coding Assistants
 
 ## Build & Run Commands
-- Run server: `bun run server.ts`
-- Run example: `bun run example.ts`
-- Test API: `./test.sh`
-- Run with API key: `ANTHROPIC_API_KEY=sk-... bun run claude.ts`
+- Run server: `npm start` or `bun run src/server/server.ts`
+- Run example: `npm run example` or `bun run src/server/example.ts`
+- Test API: `npm test` or `./scripts/test.sh`
+- Run with API key: `ANTHROPIC_API_KEY=sk-... bun run src/server/claude.ts`
 - Web UI: After running the server, visit http://localhost:3000
 
 ## Style Guidelines
@@ -21,6 +21,28 @@
 ## Codebase Structure
 This project provides a server that uses Claude API to continue conversations
 from claude.ai export format, converting between formats as needed.
+
+```
+continue-claude/
+├── config/               # Configuration files
+│   └── key.txt           # API key storage
+├── docs/                 # Documentation
+│   ├── symbolic-links.md # Documentation for symbolic links
+│   └── tasks.md          # Project tasks and TODOs
+├── scripts/              # Shell scripts
+│   ├── run.sh            # Run script
+│   └── test.sh           # Test script
+├── src/                  # Source code
+│   ├── frontend/         # Frontend files
+│   │   └── index.html    # Web UI
+│   └── server/           # Server code
+│       ├── chat.json     # Example chat data
+│       ├── claude.ts     # Claude API integration
+│       ├── example.ts    # Example usage
+│       └── server.ts     # Server implementation
+├── CLAUDE.md             # Project documentation
+└── package.json          # Project configuration
+```
 
 ## Features
 - Convert Claude chat JSON from network tab to API format
