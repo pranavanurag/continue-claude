@@ -1,0 +1,68 @@
+{
+    "uuid": "f5cf4602-5941-4b89-9e2d-6616a16a9c96",
+    "name": "Greeting and Assistance",
+    "summary": "",
+    "created_at": "2025-03-25T16:09:12.611649+00:00",
+    "updated_at": "2025-03-25T16:09:20.892845+00:00",
+    "settings": {
+        "preview_feature_uses_artifacts": true,
+        "preview_feature_uses_latex": true,
+        "enabled_artifacts_attachments": true
+    },
+    "is_starred": false,
+    "project_uuid": "866c754e-34c8-4bf5-8695-61edf4604915",
+    "current_leaf_message_uuid": "9341a477-a3fc-4ad0-8516-a27fe3aed0cc",
+    "chat_messages": [
+        {
+            "uuid": "1b6b9c29-c8a3-4a75-b660-62740e9e1920",
+            "text": "",
+            "content": [
+                {
+                    "start_timestamp": "2025-03-25T14:21:22.039133+00:00",
+                    "stop_timestamp": "2025-03-25T14:21:22.039133+00:00",
+                    "type": "text",
+                    "text": "Hi",
+                    "citations": []
+                }
+            ],
+            "sender": "human",
+            "index": 0,
+            "created_at": "2025-03-25T16:09:13.737184+00:00",
+            "updated_at": "2025-03-25T16:09:13.737184+00:00",
+            "truncated": false,
+            "attachments": [],
+            "files": [],
+            "files_v2": [],
+            "sync_sources": [],
+            "parent_message_uuid": "00000000-0000-4000-8000-000000000000"
+        },
+        {
+            "uuid": "9341a477-a3fc-4ad0-8516-a27fe3aed0cc",
+            "text": "",
+            "content": [
+                {
+                    "start_timestamp": "2025-03-25T16:09:17.047415+00:00",
+                    "stop_timestamp": "2025-03-25T16:09:17.592762+00:00",
+                    "type": "text",
+                    "text": " Hello! How can I assist you today?",
+                    "citations": []
+                }
+            ],
+            "sender": "assistant",
+            "index": 1,
+            "created_at": "2025-03-25T16:09:17.620672+00:00",
+            "updated_at": "2025-03-25T16:09:17.620672+00:00",
+            "truncated": false,
+            "stop_reason": "stop_sequence",
+            "attachments": [],
+            "files": [],
+            "files_v2": [],
+            "sync_sources": [],
+            "parent_message_uuid": "1b6b9c29-c8a3-4a75-b660-62740e9e1920"
+        }
+    ],
+    "project": {
+        "uuid": "866c754e-34c8-4bf5-8695-61edf4604915",
+        "name": "teacher? I hardly"
+    }
+}
