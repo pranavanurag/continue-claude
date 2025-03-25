@@ -1,5 +1,3 @@
-- ~~render all chat messages as markdown~~
-
 - hacky: add system prompt
 
 - commit to disk. later, commit to gitloom, allowing managing local gitloom instances
