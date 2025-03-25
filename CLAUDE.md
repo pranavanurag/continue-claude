@@ -1,9 +1,11 @@
 # CLAUDE.md - Guide for Agentic Coding Assistants
 
 ## Build & Run Commands
-- Run server: `npm start` or `bun run src/server/server.ts`
-- Run example: `npm run example` or `bun run src/server/example.ts`
-- Test API: `npm test` or `./scripts/test.sh`
+> **Note:** Bun is the recommended runtime for this project, not npm.
+
+- Run server: `bun run src/server/server.ts` or `bun start`
+- Run example: `bun run src/server/example.ts` or `bun example`
+- Test API: `bun test`
 - Run with API key: `ANTHROPIC_API_KEY=sk-... bun run src/server/claude.ts`
 - Web UI: After running the server, visit http://localhost:3000
 
@@ -25,13 +27,11 @@ from claude.ai export format, converting between formats as needed.
 ```
 continue-claude/
 ├── config/               # Configuration files
-│   └── key.txt           # API key storage
+│   ├── key.txt           # API key storage
+│   └── models.json       # Claude models configuration
 ├── docs/                 # Documentation
-│   ├── symbolic-links.md # Documentation for symbolic links
+│   ├── symbolic-links.md # Documentation for code functionality
 │   └── tasks.md          # Project tasks and TODOs
-├── scripts/              # Shell scripts
-│   ├── run.sh            # Run script
-│   └── test.sh           # Test script
 ├── src/                  # Source code
 │   ├── frontend/         # Frontend files
 │   │   ├── api.js        # API client
@@ -57,3 +57,19 @@ continue-claude/
 - Lightweight server using Bun
 - Render all chat messages as Markdown
 - Collapsible user inputs
+
+## Core Functionality
+
+### Claude API Integration
+- `convertClaudeChat`: Converts claude.ai chat format to Anthropic API format
+- `continueConversation`: Continues a conversation using the Anthropic API
+
+### Server Components
+- HTTP server on port 3000
+- API endpoint for chat continuation at `/api/chat`
+- Static file serving for web UI
+
+### Web UI Components
+- Chat display with markdown rendering
+- Form for pasting Claude chat exports
+- Interface for continuing conversations

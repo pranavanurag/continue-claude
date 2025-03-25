@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun run src/server/server.ts",
     "example": "bun run src/server/example.ts",
-    "test": "./scripts/test.sh"
+    "test": "bun test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0"

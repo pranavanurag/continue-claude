@@ -1,5 +1,7 @@
 # Symbolic Links - Function and Component Documentation
 
+> **Note:** This project uses Bun as the runtime environment, not npm. All commands should be run using Bun.
+
 ## Core Functions
 
 ### Claude Conversation API (`claude.ts`)
