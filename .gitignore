@@ -1,0 +1,14 @@
+# Dependencies
+node_modules
+bun.lock
+
+# API Keys and secrets
+key
+*.key
+.env
+
+# Logs
+*.log
+
+# Runtime data
+.DS_Store
