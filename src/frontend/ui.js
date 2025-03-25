@@ -395,7 +395,8 @@ class UIController {
       return;
     }
     
-    for (const message of chat.chat_messages) {
+    for (let i = 0; i < chat.chat_messages.length; i++) {
+      const message = chat.chat_messages[i];
       let text = '';
       for (const content of message.content) {
         if (content.type === 'text') {
@@ -404,7 +405,7 @@ class UIController {
       }
       
       if (text.trim()) {
-        this.addMessageToUI(message.sender, text);
+        this.addMessageToUI(message.sender, text, i);
       }
     }
     
@@ -416,24 +417,183 @@ class UIController {
    * Add a single message to the UI
    * @param {string} sender - 'human' or 'assistant'
    * @param {string} text - Message text
+   * @param {number} messageIndex - Index of the message in chat_messages array
    */
-  addMessageToUI(sender, text) {
+  addMessageToUI(sender, text, messageIndex) {
     const conversationDiv = this.elements.conversationContainer;
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender === 'human' ? 'user' : 'assistant'}`;
+    messageDiv.dataset.messageIndex = messageIndex;
     
-    // Render markdown for assistant messages
+    // Create message content container
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    
+    // Render markdown for assistant messages or plain text for user messages
     if (sender === 'assistant') {
-      messageDiv.innerHTML = this.renderMarkdown(text);
+      messageContent.innerHTML = this.renderMarkdown(text);
     } else {
-      // For user messages, handle newlines but not markdown
-      messageDiv.textContent = text;
+      messageContent.textContent = text;
     }
+    
+    // Create message controls
+    const messageControls = document.createElement('div');
+    messageControls.className = 'message-controls';
+    
+    // Add edit button
+    const editButton = document.createElement('button');
+    editButton.className = 'edit-button';
+    editButton.innerHTML = '<i class="fas fa-edit"></i>';
+    editButton.title = 'Edit message';
+    editButton.addEventListener('click', () => this.handleEditMessage(messageIndex));
+    
+    // Add controls to message
+    messageControls.appendChild(editButton);
+    
+    // Add content and controls to message div
+    messageDiv.appendChild(messageContent);
+    messageDiv.appendChild(messageControls);
     
     conversationDiv.appendChild(messageDiv);
     
     // Scroll to bottom of conversation
     this.scrollToBottom();
+  }
+  
+  /**
+   * Handle editing a message
+   * @param {number} messageIndex - Index of message to edit
+   */
+  handleEditMessage(messageIndex) {
+    // Get the message element and data
+    const messageElement = document.querySelector(`.message[data-message-index="${messageIndex}"]`);
+    if (!messageElement) return;
+    
+    const messageContent = messageElement.querySelector('.message-content');
+    const messageControls = messageElement.querySelector('.message-controls');
+    
+    // Get current text - for assistant messages, we need to get the raw text
+    const chat = window.chatApp.currentChat;
+    const messageData = chat.chat_messages[messageIndex];
+    const originalText = messageData.content[0].text;
+    
+    // Create textarea for editing
+    const textarea = document.createElement('textarea');
+    textarea.className = 'edit-textarea';
+    textarea.value = originalText;
+    textarea.rows = Math.min(10, originalText.split('\n').length + 1);
+    
+    // Create edit controls
+    const editControls = document.createElement('div');
+    editControls.className = 'edit-controls';
+    
+    const saveButton = document.createElement('button');
+    saveButton.className = 'save-button';
+    saveButton.innerHTML = '<i class="fas fa-save"></i> Save';
+    saveButton.title = 'Save changes';
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'cancel-button';
+    cancelButton.innerHTML = '<i class="fas fa-times"></i> Cancel';
+    cancelButton.title = 'Cancel editing';
+    
+    // Add event listeners
+    saveButton.addEventListener('click', () => this.saveMessageEdit(messageIndex, textarea.value));
+    cancelButton.addEventListener('click', () => this.cancelMessageEdit(messageIndex, messageContent, editControls, messageControls));
+    
+    // Replace content with textarea and add edit controls
+    const originalContent = messageContent.innerHTML;
+    messageElement.dataset.originalContent = originalContent;
+    
+    messageContent.innerHTML = '';
+    messageContent.appendChild(textarea);
+    
+    editControls.appendChild(saveButton);
+    editControls.appendChild(cancelButton);
+    
+    // Hide regular controls and show edit controls
+    messageControls.style.display = 'none';
+    messageElement.appendChild(editControls);
+    
+    // Focus the textarea
+    textarea.focus();
+  }
+  
+  /**
+   * Save changes to an edited message
+   * @param {number} messageIndex - Index of message being edited
+   * @param {string} newText - New text for the message
+   */
+  saveMessageEdit(messageIndex, newText) {
+    // Get the message element
+    const messageElement = document.querySelector(`.message[data-message-index="${messageIndex}"]`);
+    if (!messageElement) return;
+    
+    // Get the chat data and message
+    const chat = window.chatApp.currentChat;
+    const messageData = chat.chat_messages[messageIndex];
+    const messageContent = messageElement.querySelector('.message-content');
+    const editControls = messageElement.querySelector('.edit-controls');
+    const messageControls = messageElement.querySelector('.message-controls');
+    
+    // Update the chat data
+    messageData.content[0].text = newText;
+    messageData.edited = true;
+    messageData.editedAt = new Date().toISOString();
+    
+    // Update the UI
+    if (messageData.sender === 'assistant') {
+      messageContent.innerHTML = this.renderMarkdown(newText);
+    } else {
+      messageContent.textContent = newText;
+    }
+    
+    // Add edited indicator if not already present
+    if (!messageElement.querySelector('.edited-indicator')) {
+      const editedIndicator = document.createElement('span');
+      editedIndicator.className = 'edited-indicator';
+      editedIndicator.textContent = ' (edited)';
+      editedIndicator.style.fontSize = '0.8em';
+      editedIndicator.style.opacity = '0.7';
+      messageContent.appendChild(editedIndicator);
+    }
+    
+    // Remove edit controls and show regular controls
+    if (editControls) {
+      messageElement.removeChild(editControls);
+    }
+    messageControls.style.display = '';
+    
+    // Update JSON display
+    this.displayFormattedJson(chat);
+    
+    // Auto-save chat if we have a current chat ID
+    if (window.chatApp.currentChatId) {
+      chatStorage.saveChat(window.chatApp.currentChatId, chat);
+    }
+  }
+  
+  /**
+   * Cancel editing a message
+   * @param {number} messageIndex - Index of message being edited
+   * @param {Element} messageContent - Message content element
+   * @param {Element} editControls - Edit controls element
+   * @param {Element} messageControls - Original message controls
+   */
+  cancelMessageEdit(messageIndex, messageContent, editControls, messageControls) {
+    // Get the message element
+    const messageElement = document.querySelector(`.message[data-message-index="${messageIndex}"]`);
+    if (!messageElement) return;
+    
+    // Restore original content
+    const originalContent = messageElement.dataset.originalContent;
+    messageContent.innerHTML = originalContent;
+    
+    // Remove edit controls and show regular controls
+    if (editControls) {
+      messageElement.removeChild(editControls);
+    }
+    messageControls.style.display = '';
   }
   
   /**

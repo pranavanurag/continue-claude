@@ -88,6 +88,11 @@
         transform: translateX(-280px);
       }
     }
+    
+    /* Fix for when sidebar is collapsed */
+    .app-container.sidebar-collapsed .app-main {
+      grid-column: 1 / span 2;
+    }
 
     /* Header */
     .app-header {
@@ -461,6 +466,87 @@
       box-shadow: var(--shadow-sm);
       animation: message-fade-in 0.3s ease;
     }
+    
+    .message-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .message:hover .message-controls {
+      opacity: 1;
+    }
+    
+    .edit-button, .save-button, .cancel-button {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--gray-700);
+    }
+    
+    .edit-button:hover, .save-button:hover, .cancel-button:hover {
+      background: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    body.dark-theme .edit-button, 
+    body.dark-theme .save-button, 
+    body.dark-theme .cancel-button {
+      background: rgba(45, 50, 80, 0.9);
+      border: 1px solid var(--dark-border);
+      color: var(--dark-text);
+    }
+    
+    body.dark-theme .edit-button:hover, 
+    body.dark-theme .save-button:hover, 
+    body.dark-theme .cancel-button:hover {
+      background: var(--dark-surface-2);
+    }
+    
+    .edit-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+    
+    .edit-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      background: white;
+      color: var(--text-dark);
+    }
+    
+    body.dark-theme .edit-textarea {
+      background: var(--dark-surface-2);
+      border-color: var(--dark-border);
+      color: var(--dark-text);
+    }
+    
+    .edited-indicator {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-left: 4px;
+      font-style: italic;
+    }
+    
+    body.dark-theme .edited-indicator {
+      color: var(--dark-text-secondary);
+    }
 
     @keyframes message-fade-in {
       from { opacity: 0; transform: translateY(10px); }
@@ -720,6 +806,24 @@
       
       .app-container:not(.sidebar-collapsed) .app-sidebar {
         left: 0;
+      }
+    }
+    
+    /* Fix for square browser windows */
+    @media (min-width: 992px) and (max-width: 1100px) {
+      .app-header {
+        flex-wrap: wrap;
+      }
+      
+      .app-header > div {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 5px;
+      }
+      
+      .app-container {
+        grid-template-rows: 90px 1fr;
       }
     }
 

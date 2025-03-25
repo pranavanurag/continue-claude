@@ -322,8 +322,21 @@ class ChatApp {
     }
     
     try {
-      // Add new message to UI first
-      uiController.addMessageToUI('human', newMessage);
+      // Update current chat with the new message
+      if (!this.currentChat.chat_messages) {
+        this.currentChat.chat_messages = [];
+      }
+      
+      const newMessageIndex = this.currentChat.chat_messages.length;
+      
+      // Add message to the chat data
+      this.currentChat.chat_messages.push({
+        sender: 'human',
+        content: [{ type: 'text', text: newMessage }]
+      });
+      
+      // Add new message to UI
+      uiController.addMessageToUI('human', newMessage, newMessageIndex);
       
       // Clear the input
       uiController.clearMessageInput();
@@ -384,24 +397,17 @@ class ChatApp {
       // Remove loading indicator
       document.getElementById('conversation').removeChild(loadingDiv);
       
-      // Add Claude's response to the conversation
       const assistantMessage = responseData.content[0].text;
-      uiController.addMessageToUI('assistant', assistantMessage);
+      const assistantMessageIndex = this.currentChat.chat_messages.length;
       
-      // Update current chat with the new messages
-      if (!this.currentChat.chat_messages) {
-        this.currentChat.chat_messages = [];
-      }
-      
-      this.currentChat.chat_messages.push({
-        sender: 'human',
-        content: [{ type: 'text', text: newMessage }]
-      });
-      
+      // Add Claude's response to the chat data
       this.currentChat.chat_messages.push({
         sender: 'assistant',
         content: [{ type: 'text', text: assistantMessage }]
       });
+      
+      // Add Claude's response to the UI
+      uiController.addMessageToUI('assistant', assistantMessage, assistantMessageIndex);
       
       // Auto-save chat if we have a current chat ID
       if (this.currentChatId) {
