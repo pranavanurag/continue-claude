@@ -1,8 +1,17 @@
-- hacky: add system prompt
+- strip the input json after parsing, remove all inessential params (as when extending the chat)
+    - use the Claude API format here, the "standard" available to me
+    - ideally I would like to parse into an initial gitloom leaf node
+    
+- when editing a message, all the following messsages should be removed (y/n - tree mode related to gitloom)
+
+- add system prompt
+    - in extension mode, read system prompt from claude.ai interface
 
 - edit all messages in the history
 
-- commit to disk. later, commit to gitloom, allowing managing local gitloom instances
+- gitloom integration
+    - UI for displaying, moving around and editing the tree (use git cli from server. create local git repos in client filesystem. sqlite?)
+    - allowing managing local gitloom instances
 
 - display cost and token count on screen
 
