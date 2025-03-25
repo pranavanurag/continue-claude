@@ -102,6 +102,75 @@
     .container {
       margin-bottom: 20px;
     }
+    .collapsible {
+      background-color: #f8f8f8;
+      color: #444;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      border: 1px solid #ddd;
+      text-align: left;
+      outline: none;
+      font-size: 15px;
+      border-radius: 4px 4px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .active, .collapsible:hover {
+      background-color: #f1f1f1;
+    }
+    .collapsible:after {
+      content: '\002B';
+      font-weight: bold;
+      float: right;
+      margin-left: 5px;
+    }
+    .active:after {
+      content: '\2212';
+    }
+    .content {
+      padding: 0 18px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+    .content.open {
+      max-height: 100%;
+      padding: 10px 18px;
+    }
+    #debugConsole {
+      font-family: monospace;
+      font-size: 12px;
+      background-color: #1e1e1e;
+      color: #ddd;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-y: scroll;
+      height: 200px;
+      white-space: pre-wrap;
+    }
+    .debug-entry {
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+    }
+    .debug-timestamp {
+      color: #999;
+    }
+    .debug-url {
+      color: #75bfff;
+    }
+    .debug-method {
+      color: #c586c0;
+    }
+    .debug-status {
+      color: #4ec9b0;
+    }
   </style>
 </head>
 <body>
@@ -110,15 +179,24 @@
   <div class="container">
     <h2>API Key</h2>
     <input type="password" id="apiKey" placeholder="Enter your Anthropic API key">
+    <h3>Select Model</h3>
+    <select id="modelSelect">
+      <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet</option>
+      <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+      <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+      <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+    </select>
   </div>
   
   <div class="container">
-    <h2>Paste Claude Chat JSON</h2>
-    <textarea id="chatJson" placeholder="Paste chat JSON from network tab here"></textarea>
-    <div id="jsonDisplay">
-      <pre><code class="language-json"></code></pre>
+    <button class="collapsible">Paste Claude Chat JSON</button>
+    <div class="content">
+      <textarea id="chatJson" placeholder="Paste chat JSON from network tab here"></textarea>
+      <div id="jsonDisplay">
+        <pre><code class="language-json"></code></pre>
+      </div>
+      <button id="parseChat">Parse Chat</button>
     </div>
-    <button id="parseChat">Parse Chat</button>
     <script>
       document.getElementById('chatJson').addEventListener('input', function() {
         try {
@@ -148,9 +226,53 @@
   
   <div id="conversation"></div>
   
+  <div class="container">
+    <button class="collapsible">Debug Console</button>
+    <div class="content">
+      <div id="debugConsole"></div>
+    </div>
+  </div>
+  
   <script>
     // Store the current chat
     let currentChat = null;
+    
+    // Initialize collapsible sections
+    document.addEventListener('DOMContentLoaded', function() {
+      const collapsibles = document.getElementsByClassName('collapsible');
+      for (let i = 0; i < collapsibles.length; i++) {
+        collapsibles[i].addEventListener('click', function() {
+          this.classList.toggle('active');
+          const content = this.nextElementSibling;
+          if (content.classList.contains('open')) {
+            content.classList.remove('open');
+          } else {
+            content.classList.add('open');
+          }
+        });
+      }
+      
+      // Open the JSON section by default
+      document.querySelector('.collapsible').click();
+    });
+    
+    // Debug console functions
+    function logToDebugConsole(requestInfo) {
+      const debugConsole = document.getElementById('debugConsole');
+      const timestamp = new Date().toISOString();
+      
+      const entry = document.createElement('div');
+      entry.className = 'debug-entry';
+      
+      entry.innerHTML = `<span class="debug-timestamp">[${timestamp}]</span> ` +
+                        `<span class="debug-method">${requestInfo.method}</span> ` +
+                        `<span class="debug-url">${requestInfo.url}</span> ` +
+                        `<span class="debug-status">Status: ${requestInfo.status}</span>\n` +
+                        `<pre>${JSON.stringify(requestInfo.data, null, 2)}</pre>`;
+      
+      debugConsole.appendChild(entry);
+      debugConsole.scrollTop = debugConsole.scrollHeight;
+    }
     
     // Parse chat from JSON
     document.getElementById('parseChat').addEventListener('click', () => {
@@ -200,24 +322,49 @@
         document.getElementById('newMessage').value = '';
         
         // Call our server endpoint
+        const requestData = {
+          apiKey: apiKey,
+          chat: currentChat,
+          message: newMessage,
+          model: document.getElementById('modelSelect').value
+        };
+        
+        // Log the request to debug console
+        logToDebugConsole({
+          method: 'POST',
+          url: '/api/chat',
+          status: 'Sending',
+          data: { ...requestData, apiKey: '****' } // Hide API key
+        });
+        
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            apiKey: apiKey,
-            chat: currentChat,
-            message: newMessage
-          })
+          body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
           const errorData = await response.json();
+          logToDebugConsole({
+            method: 'POST',
+            url: '/api/chat',
+            status: response.status,
+            data: errorData
+          });
           throw new Error(errorData.error || 'API request failed');
         }
         
         const responseData = await response.json();
+        
+        // Log the response to debug console
+        logToDebugConsole({
+          method: 'POST',
+          url: '/api/chat',
+          status: response.status,
+          data: responseData
+        });
         
         // Add Claude's response to the conversation
         const assistantMessage = responseData.content[0].text;

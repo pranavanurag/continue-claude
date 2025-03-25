@@ -45,7 +45,7 @@ function convertClaudeChat(claudeChat: ClaudeChat): ApiMessage[] {
 }
 
 // Continue conversation using Anthropic API
-async function continueConversation(apiKey: string, claudeChat: ClaudeChat, newMessage?: string) {
+async function continueConversation(apiKey: string, claudeChat: ClaudeChat, newMessage?: string, model?: string) {
   const messages = convertClaudeChat(claudeChat);
   
   // Add the new message from user
@@ -61,7 +61,7 @@ async function continueConversation(apiKey: string, claudeChat: ClaudeChat, newM
   // Make API request
   try {
     const response = await client.messages.create({
-      model: "claude-3-5-sonnet-latest", // Or your preferred model
+      model: model || "claude-3-5-sonnet-latest", // Use provided model or default
       max_tokens: 1024,
       messages: messages
     });

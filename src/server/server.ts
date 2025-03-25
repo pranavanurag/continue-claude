@@ -56,9 +56,14 @@ async function startServer() {
           const claudeChat = body.chat as ClaudeChat;
           const newMessage = body.message as string;
           const userApiKey = body.apiKey as string;
+          const model = body.model as string;
           
-          // Continue the conversation using user-provided API key
-          const response = await continueConversation(userApiKey, claudeChat, newMessage);
+          console.log(`API Request: ${url.pathname}, Model: ${model}`);
+          
+          // Continue the conversation using user-provided API key and model
+          const response = await continueConversation(userApiKey, claudeChat, newMessage, model);
+          
+          console.log(`API Response: Status 200, ID: ${response.id}`);
           
           return Response.json(response);
         } catch (error) {
