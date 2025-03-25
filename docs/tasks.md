@@ -22,3 +22,5 @@
    - images / blobs
    - MCP servers
 
+- refactor index.html (move the CSS out)
+

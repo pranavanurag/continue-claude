@@ -11,9 +11,7 @@ const API_ENDPOINTS = {
 // Default models if API fails
 const DEFAULT_MODELS = [
   { id: 'claude-3-5-sonnet-latest', display_name: 'Claude 3.5 Sonnet' },
-  { id: 'claude-3-opus-20240229', display_name: 'Claude 3 Opus' },
-  { id: 'claude-3-sonnet-20240229', display_name: 'Claude 3 Sonnet' },
-  { id: 'claude-3-haiku-20240307', display_name: 'Claude 3 Haiku' }
+  { id: 'claude-3-opus-20240229', display_name: 'Claude 3 Opus' }
 ];
 
 class ApiService {
